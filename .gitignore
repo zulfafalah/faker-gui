@@ -3,3 +3,8 @@ env
 __pycache__
 .venv
 .env.example
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec.bak

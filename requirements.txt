@@ -4,6 +4,9 @@
 # Main library for generating fake data
 Faker==40.1.2
 
+# PyInstaller for creating standalone executables
+pyinstaller==6.3.0
+
 # Note: This project also uses the following standard library modules:
 # - tkinter (built-in GUI library)
 # - json (built-in JSON handling)

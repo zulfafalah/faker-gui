@@ -122,6 +122,89 @@ The JSON config allows you to override specific columns with fixed values or a l
 - The application uses Indonesian locale for Faker by default (can be changed in `type_mapper.py`)
 - Generated values respect column constraints (NOT NULL, data types, etc.)
 
+## Building Windows Executable
+
+You can compile this application into a standalone Windows executable (.exe) that runs without Python installed.
+
+### Prerequisites for Building
+
+- Python 3.11 or higher
+- All runtime dependencies (`requirements.txt`)
+- Build dependencies (`requirements-build.txt`)
+
+### Build Instructions
+
+#### Option 1: Build on Windows (Recommended)
+
+1. **Install Dependencies:**
+   ```cmd
+   pip install -r requirements.txt
+   pip install -r requirements-build.txt
+   ```
+
+2. **Run Build Script:**
+   ```cmd
+   python build.py
+   ```
+
+3. **Find Your Executable:**
+   - Location: `dist/FakerGUI.exe`
+   - Size: ~15-25 MB (includes Python runtime)
+   - Standalone - no Python installation needed to run
+
+#### Option 2: Build Using Spec File
+
+For more control over the build process:
+
+```cmd
+pyinstaller faker_gui.spec
+```
+
+This uses the spec file which includes example files and custom configuration.
+
+#### Option 3: Cross-compile on Linux (Advanced)
+
+If you're on Linux but need a Windows executable:
+
+1. **Install Wine:**
+   ```bash
+   sudo apt-get install wine wine64
+   ```
+
+2. **Install Windows Python in Wine:**
+   ```bash
+   wget https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe
+   wine python-3.11.7-amd64.exe
+   ```
+
+3. **Install Dependencies:**
+   ```bash
+   wine python -m pip install -r requirements.txt
+   wine python -m pip install -r requirements-build.txt
+   ```
+
+4. **Build:**
+   ```bash
+   wine python build.py
+   ```
+
+**Note:** Cross-compilation is experimental. Native Windows builds are recommended for production.
+
+### Distribution
+
+Once built, `FakerGUI.exe` can be:
+- Distributed as a single file
+- Run on Windows 10/11 without Python
+- Shared via USB, email, or download
+- No installation required
+
+### Build Files
+
+- `build.py` - Automated build script
+- `faker_gui.spec` - PyInstaller configuration
+- `requirements-build.txt` - Build-time dependencies
+
 ## License
 
 MIT License - Feel free to use and modify as needed.
+
