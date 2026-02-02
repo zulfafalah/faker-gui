@@ -1,1 +1,12 @@
-faker==24.0.0
+# Faker GUI - SQL Data Generator
+# Dependencies for generating fake data
+
+# Main library for generating fake data
+Faker==40.1.2
+
+# Note: This project also uses the following standard library modules:
+# - tkinter (built-in GUI library)
+# - json (built-in JSON handling)
+# - re (built-in regular expressions)
+# - os (built-in operating system interface)
+# - typing (built-in type hints)
