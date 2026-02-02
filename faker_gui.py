@@ -25,6 +25,10 @@ class FakerGUI:
         self.current_file = None
         self.is_modified = False
         
+        # Placeholder tracking
+        self.ddl_has_placeholder = True
+        self.json_has_placeholder = True
+        
         # Configure grid weights for responsive layout
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
@@ -178,14 +182,15 @@ CREATE TABLE `t_listing_document` (
     
     def _on_ddl_focus_in(self, event):
         """Clear placeholder text when DDL field is focused."""
-        if self.ddl_text.get('1.0', 'end-1c').startswith('-- Paste your CREATE TABLE'):
+        if self.ddl_has_placeholder:
             self.ddl_text.delete('1.0', tk.END)
+            self.ddl_has_placeholder = False
     
     def _on_json_focus_in(self, event):
         """Clear placeholder text when JSON field is focused."""
-        current_text = self.json_text.get('1.0', 'end-1c').strip()
-        if current_text.startswith('{') and '"company_code"' in current_text:
+        if self.json_has_placeholder:
             self.json_text.delete('1.0', tk.END)
+            self.json_has_placeholder = False
     
     def _on_text_modified(self, event):
         """Mark configuration as modified when text changes."""
@@ -256,6 +261,8 @@ CREATE TABLE `t_listing_document` (
         self.output_text.delete('1.0', tk.END)
         self.count_var.set("10")
         self.is_modified = False
+        self.ddl_has_placeholder = False
+        self.json_has_placeholder = False
         self.update_title()
     
     def new_file(self):
@@ -351,10 +358,12 @@ CREATE TABLE `t_listing_document` (
             # Load DDL statement
             if 'ddl_statement' in config:
                 self.ddl_text.insert('1.0', config['ddl_statement'])
+                self.ddl_has_placeholder = False  # Mark that real content is loaded
             
             # Load JSON config
             if 'json_config' in config:
                 self.json_text.insert('1.0', config['json_config'])
+                self.json_has_placeholder = False  # Mark that real content is loaded
             
             # Load record count
             if 'record_count' in config:
