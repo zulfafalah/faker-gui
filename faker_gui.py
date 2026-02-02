@@ -3,7 +3,9 @@ Faker GUI - A cross-platform application for generating fake SQL data.
 """
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, filedialog
+import json
+import os
 from data_generator import DataGenerator
 from query_builder import QueryBuilder
 
@@ -19,13 +21,20 @@ class FakerGUI:
         # Set minimum window size
         self.root.minsize(900, 600)
         
+        # File tracking
+        self.current_file = None
+        self.is_modified = False
+        
         # Configure grid weights for responsive layout
-        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        
+        # Create menu bar
+        self._create_menu_bar()
         
         # Create main container
         main_container = ttk.Frame(self.root, padding="10")
-        main_container.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_container.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         main_container.grid_rowconfigure(3, weight=1)
         main_container.grid_columnconfigure(0, weight=1)
         
@@ -42,6 +51,30 @@ class FakerGUI:
         
         # Create output section
         self._create_output_section(main_container)
+    
+    def _create_menu_bar(self):
+        """Create the menu bar with File menu."""
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+        
+        # File menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        
+        file_menu.add_command(label="New", command=self.new_file, accelerator="Ctrl+N")
+        file_menu.add_command(label="Open...", command=self.load_configuration, accelerator="Ctrl+O")
+        file_menu.add_separator()
+        file_menu.add_command(label="Save", command=self.save_configuration, accelerator="Ctrl+S")
+        file_menu.add_command(label="Save As...", command=self.save_configuration_as, accelerator="Ctrl+Shift+S")
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.exit_application, accelerator="Ctrl+Q")
+        
+        # Keyboard shortcuts
+        self.root.bind('<Control-n>', lambda e: self.new_file())
+        self.root.bind('<Control-o>', lambda e: self.load_configuration())
+        self.root.bind('<Control-s>', lambda e: self.save_configuration())
+        self.root.bind('<Control-Shift-S>', lambda e: self.save_configuration_as())
+        self.root.bind('<Control-q>', lambda e: self.exit_application())
     
     def _create_input_section(self, parent):
         """Create the input section with DDL and JSON config."""
@@ -72,6 +105,7 @@ CREATE TABLE `t_listing_document` (
 );"""
         self.ddl_text.insert('1.0', placeholder_ddl)
         self.ddl_text.bind('<FocusIn>', self._on_ddl_focus_in)
+        self.ddl_text.bind('<KeyRelease>', self._on_text_modified)
         
         # JSON Config Input
         json_label = ttk.Label(input_frame, text="JSON Config (Optional):", 
@@ -89,6 +123,7 @@ CREATE TABLE `t_listing_document` (
 }"""
         self.json_text.insert('1.0', placeholder_json)
         self.json_text.bind('<FocusIn>', self._on_json_focus_in)
+        self.json_text.bind('<KeyRelease>', self._on_text_modified)
     
     def _create_controls_section(self, parent):
         """Create the controls section with record count and generate button."""
@@ -152,6 +187,12 @@ CREATE TABLE `t_listing_document` (
         if current_text.startswith('{') and '"company_code"' in current_text:
             self.json_text.delete('1.0', tk.END)
     
+    def _on_text_modified(self, event):
+        """Mark configuration as modified when text changes."""
+        if not self.is_modified:
+            self.is_modified = True
+            self.update_title()
+    
     def generate_sql(self):
         """Generate SQL INSERT statements based on inputs."""
         try:
@@ -214,6 +255,144 @@ CREATE TABLE `t_listing_document` (
         self.json_text.delete('1.0', tk.END)
         self.output_text.delete('1.0', tk.END)
         self.count_var.set("10")
+        self.is_modified = False
+        self.update_title()
+    
+    def new_file(self):
+        """Create a new configuration (reset all fields)."""
+        if self.is_modified:
+            response = messagebox.askyesnocancel("Save Changes?", 
+                                                 "Do you want to save changes to the current configuration?")
+            if response is True:  # Yes, save
+                self.save_configuration()
+            elif response is None:  # Cancel
+                return
+        
+        self.clear_all()
+        self.current_file = None
+        self.is_modified = False
+        self.update_title()
+    
+    def save_configuration(self):
+        """Save current configuration to file."""
+        if self.current_file:
+            self._save_to_file(self.current_file)
+        else:
+            self.save_configuration_as()
+    
+    def save_configuration_as(self):
+        """Save current configuration to a new file."""
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".faker",
+            filetypes=[("Faker Configuration", "*.faker"), ("All Files", "*.*")],
+            title="Save Configuration As"
+        )
+        
+        if filepath:
+            self._save_to_file(filepath)
+    
+    def _save_to_file(self, filepath):
+        """Internal method to save configuration to specified file."""
+        try:
+            # Get current DDL and JSON config
+            ddl = self.ddl_text.get('1.0', 'end-1c').strip()
+            json_config = self.json_text.get('1.0', 'end-1c').strip()
+            count = self.count_var.get()
+            
+            # Create configuration dictionary
+            config = {
+                "ddl_statement": ddl,
+                "json_config": json_config,
+                "record_count": count
+            }
+            
+            # Save to file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            self.current_file = filepath
+            self.is_modified = False
+            self.update_title()
+            messagebox.showinfo("Success", f"Configuration saved to:\n{filepath}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save configuration:\n{str(e)}")
+    
+    def load_configuration(self):
+        """Load configuration from file."""
+        if self.is_modified:
+            response = messagebox.askyesnocancel("Save Changes?", 
+                                                 "Do you want to save changes to the current configuration?")
+            if response is True:  # Yes, save
+                self.save_configuration()
+            elif response is None:  # Cancel
+                return
+        
+        filepath = filedialog.askopenfilename(
+            defaultextension=".faker",
+            filetypes=[("Faker Configuration", "*.faker"), ("All Files", "*.*")],
+            title="Open Configuration"
+        )
+        
+        if filepath:
+            self._load_from_file(filepath)
+    
+    def _load_from_file(self, filepath):
+        """Internal method to load configuration from specified file."""
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Clear existing content
+            self.ddl_text.delete('1.0', tk.END)
+            self.json_text.delete('1.0', tk.END)
+            self.output_text.delete('1.0', tk.END)
+            
+            # Load DDL statement
+            if 'ddl_statement' in config:
+                self.ddl_text.insert('1.0', config['ddl_statement'])
+            
+            # Load JSON config
+            if 'json_config' in config:
+                self.json_text.insert('1.0', config['json_config'])
+            
+            # Load record count
+            if 'record_count' in config:
+                self.count_var.set(config['record_count'])
+            
+            self.current_file = filepath
+            self.is_modified = False
+            self.update_title()
+            messagebox.showinfo("Success", f"Configuration loaded from:\n{filepath}")
+            
+        except json.JSONDecodeError:
+            messagebox.showerror("Error", "Invalid configuration file format")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load configuration:\n{str(e)}")
+    
+    def update_title(self):
+        """Update window title with current file name."""
+        if self.current_file:
+            filename = os.path.basename(self.current_file)
+            modified_flag = "*" if self.is_modified else ""
+            self.root.title(f"Faker GUI - {filename}{modified_flag}")
+        else:
+            modified_flag = "*" if self.is_modified else ""
+            self.root.title(f"Faker GUI - SQL Data Generator{modified_flag}")
+    
+    def exit_application(self):
+        """Exit the application with save prompt if needed."""
+        if self.is_modified:
+            response = messagebox.askyesnocancel("Save Changes?", 
+                                                 "Do you want to save changes before exiting?")
+            if response is True:  # Yes, save
+                self.save_configuration()
+                self.root.destroy()
+            elif response is False:  # No, don't save
+                self.root.destroy()
+            # Cancel: do nothing
+        else:
+            self.root.destroy()
 
 
 def main():
