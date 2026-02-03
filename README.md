@@ -1,4 +1,5 @@
 # Faker GUI - SQL Data Generator
+<img width="1203" height="858" alt="image" src="https://github.com/user-attachments/assets/4c606120-8c04-4254-b2d8-91f02c69d931" />
 
 A cross-platform GUI application for generating fake SQL data from DDL statements using the Faker library.
 
