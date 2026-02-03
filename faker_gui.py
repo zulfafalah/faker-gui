@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox, filedialog
 import json
 import os
+import webbrowser
 from data_generator import DataGenerator
 from query_builder import QueryBuilder
 
@@ -72,6 +73,11 @@ class FakerGUI:
         file_menu.add_command(label="Save As...", command=self.save_configuration_as, accelerator="Ctrl+Shift+S")
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.exit_application, accelerator="Ctrl+Q")
+        
+        # About menu
+        about_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="About", menu=about_menu)
+        about_menu.add_command(label="GitHub Repository", command=self.open_github)
         
         # Keyboard shortcuts
         self.root.bind('<Control-n>', lambda e: self.new_file())
@@ -388,6 +394,10 @@ CREATE TABLE `t_listing_document` (
         else:
             modified_flag = "*" if self.is_modified else ""
             self.root.title(f"Faker GUI - SQL Data Generator{modified_flag}")
+    
+    def open_github(self):
+        """Open the GitHub repository in the default web browser."""
+        webbrowser.open('https://github.com/zulfafalah/faker-gui')
     
     def exit_application(self):
         """Exit the application with save prompt if needed."""

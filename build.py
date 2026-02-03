@@ -54,16 +54,13 @@ def main():
             print(f"Cleaning {dir_name}/ directory...")
             shutil.rmtree(dir_path)
     
-    # Build command using PyInstaller
+    # Build command using PyInstaller with spec file
     build_cmd = [
         sys.executable,
         "-m", "PyInstaller",
-        "--name=FakerGUI",
-        "--onefile",
-        "--windowed",
         "--clean",
         "--noconfirm",
-        "faker_gui.py"
+        "FakerGUI.spec"
     ]
     
     print(f"Running: {' '.join(build_cmd)}")

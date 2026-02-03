@@ -5,7 +5,7 @@
 Faker==40.1.2
 
 # PyInstaller for creating standalone executables
-pyinstaller==6.3.0
+pyinstaller>=6.15.0
 
 # Note: This project also uses the following standard library modules:
 # - tkinter (built-in GUI library)
